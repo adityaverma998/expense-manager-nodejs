@@ -1,140 +1,359 @@
-const expect = require('chai').expect;
-const request =  require('supertest');
+const assert = require('chai').assert;
+const request = require('supertest');
 const app = require('../index');
 // testsuit starts from here
-describe('Expense Manager testing', function() {
+describe('Expense Manager testing', function () {
+  const baseRoute = '/api/expense';
+  const responseMessages = {
+    successfullyAdded: 'Expense record is added successfully',
+    notFound: 'Not Found',
+    expenseWithIDAlreadyPresent: 'Expense record is already exist with the given id',
+    emptyDataReceived: 'Empty data is not allowed, please provide some valid data to insert record',
+    noDataReceived: 'Please provide some data to add new expense',
+    missingTitleInData: 'Please provide values for id ,title, category, description, amount and expenseDate.' + 
+                        ' All are mandatory data elements',
+    successfullyUpdated: 'Expense record is updated successfully',
+    expenseNotFoundWithId:'Expense record is not found with the given id',
+    emptyDataForUpdate: 'Empty data is not allowed, please provide some valid data to update record',
+    noDataReceivedForUpdate: 'Please provide id and some data to update expense record',
+    idMissingInRequest: 'Please provide expense id to update record',
+    missingValuesOtherThanId: 'Please provide values those needs to update',
+    successfullyDeleted: 'Expense record is deleted successfully',
+    expenseNotFoundWithIdForDelete: 'Expense provide correct id, there is no expense record with the given id'
+  };
+  const testData = {
+    validExpense: {
+      "id": "9",
+      "title": "test",
+      "category": "test",
+      "description": "test data",
+      "amount": "7000",
+      "expenseDate": "18/11/2017"
+    },
+    existingExpense: {
+      "id": "1",
+      "title": "test",
+      "category": "test",
+      "description": "test data",
+      "amount": "7000",
+      "expenseDate": "18/11/2017"
+    },
+    emptyExpense: {},
+    missingTitleExpense: {
+      "id": "9",
+      "category": "test",
+      "description": "test data",
+      "amount": "7000",
+      "expenseDate": "18/11/2017"
+    },
+    missingIdExpense: {
+      "title": "title",
+      "category": "test",
+      "description": "test data",
+      "amount": "7000",
+      "expenseDate": "18/11/2017"
+    },
+    expenseWithOnlyId: {
+      "id": "1"
+    }
+  };
   //testsuit for functionality testing
-  describe('Functionality testing', function() {
+  describe('Functionality testing', function () {
     // testsuit for adding expense
-    describe('Adding expense functionality testing', function() {
+    describe('Adding expense functionality testing', function () {
       // testcase to insert expense record
-      it('Should create expense, returning success message', function(done) {
-          //write assertion code here and your response should return below given message
-          //'Expense record is added successfully'
-          done();
+      it('Should create expense, returning success message', function (done) {
+        //write assertion code here and your response should return below given message
+        //'Expense record is added successfully'
+        request(app)
+          .post(`${baseRoute}/`)
+          .send(testData.validExpense)
+          .expect(201)
+          .end((err, res) => {
+            if (err) return done(err);
+            assert.equal(res.body, responseMessages.successfullyAdded, 'should add expense and send success message');
+          });
+        done();
       });
       // testcase to handle, if expense record is already exist with the given id
-      it('Should not create expense if expense is already exist with the given id, returning error message', function(done) {
-          // write assertion code here and your response should return below given message
-          //'Expense record is already exist with the given id'
-          done();
+      it('Should not create expense if expense is already exist with the given id, returning error message', function (done) {
+        // write assertion code here and your response should return below given message
+        //'Expense record is already exist with the given id'
+        request(app)
+          .post(`${baseRoute}/`)
+          .send(testData.existingExpense)
+          .expect(400)
+          .end((err, res) => {
+            if (err) return done(err);
+            assert.equal(res.body, responseMessages.expenseWithIDAlreadyPresent, 'should not add expense and send error message');
+          });
+        done();
       });
       // testcase to handle, if user is passing empty record.
-      it('Should not create expense if passing empty record, returning error message', function(done) {
-          // write assertion code here and your response should return below given message
-          //'Empty data is not allowed, please provide some valid data to insert record'
-          done();
+      it('Should not create expense if passing empty record, returning error message', function (done) {
+        // write assertion code here and your response should return below given message
+        //'Empty data is not allowed, please provide some valid data to insert record'
+        request(app)
+          .post(`${baseRoute}/`)
+          .send(testData.emptyExpense)
+          .expect(400)
+          .end((err, res) => {
+            if (err) return done(err);
+            assert.equal(res.body, responseMessages.emptyDataReceived, 'should not add expense and send error message');
+          });
+        done();
       });
       // testcase to handle, if user is not passing any record in post body.
-      it('Should not create expense if user is not passing any record in post request, returning error message', function(done) {
-          // write assertion code here and your response should return below given message
-          // 'Please provide some data to add new expense'
-          done();
+      it('Should not create expense if user is not passing any record in post request, returning error message', function (done) {
+        // write assertion code here and your response should return below given message
+        // 'Please provide some data to add new expense'
+        request(app)
+          .post(`${baseRoute}/`)
+          .expect(400)
+          .end((err, res) => {
+            if (err) return done(err);
+            assert.equal(res.body, responseMessages.noDataReceived, 'should not add expense and send error message');
+          });
+        done();
       });
       // testcase to handle, if user is passing wrong key as a record.
-      it('Should not create expense if user is passing wrong data, returning error message', function(done) {
-          // write assertion code here and your response should return below given message
-          // 'Please provide values for id ,title, category, description, amount and expenseDate. All are mandatory data elements'
-          done();
+      it('Should not create expense if user is passing wrong data, returning error message', function (done) {
+        // write assertion code here and your response should return below given message
+        // 'Please provide values for id ,title, category, description, amount and expenseDate. All are mandatory data elements'
+        request(app)
+          .post(`${baseRoute}/`)
+          .send(testData.missingTitleExpense)
+          .expect(400)
+          .end((err, res) => {
+            if (err) return done(err);
+            assert.equal(res.body, responseMessages.missingTitleInData, 'should not add expense and send error message');
+          });
+        done();
       });
     });
     // testsuit to get all expense record
-    describe('Getting all expense functionality testing', function() {
-      it('Should get all expense, returning array of expense ', function(done) {
-          // write assertion code here and check response array length, it should be greater than zero
-          done();
+    describe('Getting all expense functionality testing', function () {
+      it('Should get all expense, returning array of expense ', function (done) {
+        // write assertion code here and check response array length, it should be greater than zero
+        request(app)
+          .get(`${baseRoute}/`)
+          .expect(200)
+          .end((err, res) => {
+            if (err) return done(err);
+            assert.isNotEmpty(res.body);
+            assert.isAbove(res.body.length, 0)
+          });
+        done();
       });
     });
     // testsuit to update expense record
-    describe('Updating expense functionality testing', function() {
+    describe('Updating expense functionality testing', function () {
       // testcase to update particular expense category
-      it('Should search expense by id and update expense category, returning success message', function(done) {
-          // write assertion code here and your response should return below given message
-          // 'Expense record is updated successfully'
-          done();
+      it('Should search expense by id and update expense category, returning success message', function (done) {
+        // write assertion code here and your response should return below given message
+        // 'Expense record is updated successfully'
+        request(app)
+          .put(`${baseRoute}/${testData.existingExpense.id}`)
+          .send(testData.existingExpense)
+          .expect(200)
+          .end((err, res) => {
+            if (err) return done(err);
+            assert.equal(res.body, responseMessages.successfullyUpdated, 'should update expense and send success message');
+          });
+        done();
       });
       // testcase to handle, if no expense record will be found by given category
-      it('Should search expense by id if expense is not found with the given id, returning error message', function(done) {
-          // write assertion code here and your response should return below given message
-          // 'Expense record is not found with the given id'
-          done();
+      it('Should search expense by id if expense is not found with the given id, returning error message', function (done) {
+        // write assertion code here and your response should return below given message
+        // 'Expense record is not found with the given id'
+        request(app)
+          .put(`${baseRoute}/-1`)
+          .send(testData.existingExpense)
+          .expect(400)
+          .end((err, res) => {
+            if (err) return done(err);
+            assert.equal(res.body, responseMessages.expenseNotFoundWithId, 'should not update expense and send error message');
+          });
+        done();
       });
       // testcase to handle, if user is passing empty record.
-      it('Should not update expense if passing empty record, returning error message', function(done) {
+      it('Should not update expense if passing empty record, returning error message', function (done) {
         // write assertion code here and your response should return below given message
         // 'Empty data is not allowed, please provide some valid data to update record'
-         done();
+        request(app)
+          .put(`${baseRoute}/1`)
+          .send(testData.emptyExpense)
+          .expect(400)
+          .end((err, res) => {
+            if (err) return done(err);
+            assert.equal(res.body, responseMessages.emptyDataForUpdate, 'should not update expense and send error message');
+          });
+        done();
       });
       // testcase to handle, if user is not passing any record in put body.
-      it('Should not update expense if user is not passing any record in update request, returning error message', function(done) {
-          // write assertion code here and your response should return below given message
-          // 'Please provide id and some data to update expense record'
-          done();
+      it('Should not update expense if user is not passing any record in update request, returning error message', function (done) {
+        // write assertion code here and your response should return below given message
+        // 'Please provide id and some data to update expense record'
+        request(app)
+          .put(`${baseRoute}/1`)
+          .expect(400)
+          .end((err, res) => {
+            if (err) return done(err);
+            assert.equal(res.body, responseMessages.noDataReceivedForUpdate, 'should not update expense and send error message');
+          });
+        done();
       });
       // testcase to handle, if user is not passing id in update request.
-      it('Should not update expense if passing without any id, returning error message', function(done) {
-          // write assertion code here and your response should return below given message
-          // 'Please provide expense id to update record'
-          done();
+      it('Should not update expense if passing without any id, returning error message', function (done) {
+        // write assertion code here and your response should return below given message
+        // 'Please provide expense id to update record'
+        request(app)
+          .put(`${baseRoute}/1`)
+          .send(testData.missingIdExpense)
+          .expect(400)
+          .end((err, res) => {
+            if (err) return done(err);
+            assert.equal(res.body, responseMessages.idMissingInRequest, 'should not update expense and send error message');
+          });
+        done();
       });
       // testcase to handle, if user is passing id only id not other field values.
-      it('Should not update expense if passing only id not other fields, returning error message', function(done) {
-          // write assertion code here and your response should return below given message
-          // 'Please provide values those needs to update'
-          done();
+      it('Should not update expense if passing only id not other fields, returning error message', function (done) {
+        // write assertion code here and your response should return below given message
+        // 'Please provide values those needs to update'
+        request(app)
+          .put(`${baseRoute}/1`)
+          .send(testData.expenseWithOnlyId)
+          .expect(400)
+          .end((err, res) => {
+            if (err) return done(err);
+            assert.equal(res.body, responseMessages.missingValuesOtherThanId, 'should not update expense and send error message');
+          });
+        done();
       });
     });
     // testsuit to search and get expense record according to given condition
-    describe('Searching expense functionality testing', function() {
+    describe('Searching expense functionality testing', function () {
       // testcase to get all expense those are matching with given start and end date
-      it('Should search expense by start and end date, returning matching expense data as an array', function(done) {
+      it('Should search expense by start and end date, returning matching expense data as an array', function (done) {
         // write assertion code here and check response array length, it should be greater than zero
+        const startDate = '01/01/2018';
+        const endDate = '31/12/2018';
+        const url = `${baseRoute}/?startdate=${startDate}&enddate=${endDate}`;
+
+        request(app)
+          .get(url)
+          .expect(200)
+          .end((err, res) => {
+            if (err) return done(err);
+            assert.isNotEmpty(res.body);
+            assert.isAbove(res.body.length, 0);
+          });
         done();
       });
-       // testcase to get all expense, those are equal to given start date and greater than given start date
-      it('Should search expense by start date only, returning expense data where date is greater than and equal to the given start date', function(done) {
+      // testcase to get all expense, those are equal to given start date and greater than given start date
+      it('Should search expense by start date only, returning expense data where date is greater than and equal to the given start date', function (done) {
         // write assertion code here and check response array length, it should be greater than zero
+        const startDate = '01/01/2018';
+        const url = `${baseRoute}/?startdate=${startDate}`;
+
+        request(app)
+          .get(url)
+          .expect(200)
+          .end((err, res) => {
+            if (err) return done(err);
+            assert.isNotEmpty(res.body);
+            assert.isAbove(res.body.length, 0);
+          });
         done();
       });
       // testcase to get all expense those are matching with given category, start and end date.
-      it('Should search expense by category, start and end date, returning matching expense data as an array', function(done) {
+      it('Should search expense by category, start and end date, returning matching expense data as an array', function (done) {
         // write assertion code here and check response array length, it should be greater than zero
+        const startDate = '01/01/2018';
+        const endDate = '31/12/2018';
+        const category = 'fair';
+        const url = `${baseRoute}/${category}?startdate=${startDate}&enddate=${endDate}`;
+
+        request(app)
+          .get(url)
+          .expect(200)
+          .end((err, res) => {
+            if (err) return done(err);
+            const data = res.body;
+            assert.isNotEmpty(data);
+            assert.isAbove(data.length, 0);
+          });
         done();
       });
       // // testcase to get all expense, those are equal to given category, start date and greater than given start date
-      it('Should search expense by category and start date only, returning expense data matching with given category and date should be greater than and equal to start date', function(done) {
+      it('Should search expense by category and start date only, returning expense data matching with given category and date should be greater than and equal to start date', function (done) {
         // write assertion code here and check response array length, it should be greater than zero
+        const startDate = '01/01/2018';
+        const category = 'fair';
+        const url = `${baseRoute}/${category}?startdate=${startDate}`;
+
+        request(app)
+          .get(url)
+          .expect(200)
+          .end((err, res) => {
+            if (err) return done(err);
+            assert.isNotEmpty(res.body);
+            assert.isAbove(res.body.length, 0);
+          });
         done();
       });
       // // testcase to get all expense, those are equal to given category, start date and greater than given start date
-      it('Should handle 404 error if route not matched, returning Not Found message', function(done) {
+      it('Should handle 404 error if route not matched, returning Not Found message', function (done) {
         // write assertion code here and your response should return below given message
         // 'Not Found'
+        const url = `${baseRoute}/data/something-not-exists`;
+        request(app)
+          .get(url)
+          .expect(404)
+          .end((err, res) => {
+            if (err) return done(err);
+            assert.equal(res.body, responseMessages.notFound);
+          });
         done();
       });
     });
     // testsuit to delete a expense record
-    describe('Deleting expense functionality testing', function() {
+    describe('Deleting expense functionality testing', function () {
       // testcase to delete expense record by given id
-      it('Should search expense by id and delete particular expense record, returning success message', function(done) {
+      it('Should search expense by id and delete particular expense record, returning success message', function (done) {
         // write assertion code here and your response should return below given message
         // 'Expense record is deleted successfully'
+        request(app)
+          .delete(`${baseRoute}/1`)
+          .expect(200)
+          .end((err, res) => {
+            if (err) return done(err);
+            assert.equal(res.body, responseMessages.successfullyDeleted, 'should delete expense and send success message');
+          });
         done();
       });
       // testcase to handle, if no expense record will be found by given id
-      it('Should search expense by id if expense is not found with the given id, returning error message', function(done) {
+      it('Should search expense by id if expense is not found with the given id, returning error message', function (done) {
         // write assertion code here and your response should return below given message
         // 'Expense provide correct id, there is no expense record with the given id'
+        request(app)
+          .delete(`${baseRoute}/-1`)
+          .expect(400)
+          .end((err, res) => {
+            if (err) return done(err);
+            assert.equal(res.body, responseMessages.expenseNotFoundWithIdForDelete, 'should not delete expense and send error message');
+          });
         done();
       });
       // testcase to handle, if user is not passing any record in delete body.
-      it('Should not delete expense if user is not passing any record in delete request, returning error message', function(done) {
+      it('Should not delete expense if user is not passing any record in delete request, returning error message', function (done) {
         // write assertion code here and your response should return below given message
         // 'Please provide expense id to delete expense record'
-        done();
+       done();
       });
       // testcase to handle, if user is not passing id in delete request body.
-      it('Should not delete expense if not passing id, returning error message', function(done) {
+      it('Should not delete expense if not passing id, returning error message', function (done) {
         // write assertion code here and your response should return below given message
         // 'Please provide expense id to delete expense record'
         done();
